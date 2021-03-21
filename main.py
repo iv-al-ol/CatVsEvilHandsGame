@@ -4,7 +4,7 @@ import random
 
 WIDTH = 800
 HEIGHT = 650
-FPS = 30
+FPS = 60
 
 # Задаем цвета
 WHITE = (255, 255, 255)
@@ -17,18 +17,18 @@ BLUE = (0, 0, 255)
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((50, 50))
+        self.image = pygame.Surface((10, 50))
         self.image.fill(GREEN)
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH / 2, HEIGHT / 2)
         
         
     def update(self):
-        self.rect.x += 5
+        self.rect.x += 2
+        self.rect.y -= 1
         if self.rect.left > WIDTH:
-            self.rect.right = 0
-
-
+            self.rect.x = 0
+            
 # Создаем игру и окно
 pygame.init()
 pygame.mixer.init()
