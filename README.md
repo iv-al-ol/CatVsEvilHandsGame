@@ -1,2 +1,2 @@
-# Py-Projects
-Test repository with sample python projects
+# This is a training program
+Repository for training Python programming skills
