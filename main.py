@@ -1,9 +1,15 @@
 # Pygame шаблон - скелет для нового проекта Pygame
 import pygame
 import random
+import os
 
-WIDTH = 800
-HEIGHT = 650
+py_folder = os.path.dirname(__file__)   # Папка файла питона
+img_folder = os.path.join(py_folder, 'img') # Папка с изображениями в папке питона
+
+player_img = pygame.image.load(os.path.join(img_folder, 'cat.png')) # Добавление изображения
+
+WIDTH = 1600 // 2
+HEIGHT = 900 // 2
 FPS = 60
 
 # Задаем цвета
@@ -13,22 +19,35 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((10, 50))
-        self.image.fill(GREEN)
+        self.image = player_img
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH / 2, HEIGHT / 2)
-        
+        self.x_reflection = 0
+        self.y_reflection = 0
         
     def update(self):
-        self.rect.x += 2
-        self.rect.y -= 1
-        if self.rect.left > WIDTH:
-            self.rect.x = 0
-            
+        if self.x_reflection == 0:
+            self.rect.x += 3
+        if self.x_reflection == 1:
+            self.rect.x -= 3
+        if self.rect.right > WIDTH:
+            self.x_reflection = 1
+        if self.rect.left < 0:
+            self.x_reflection = 0
+
+        if self.y_reflection == 0:
+            self.rect.y += 3
+        if self.y_reflection == 1:
+            self.rect.y -= 3
+        if self.rect.bottom > HEIGHT:
+            self.y_reflection = 1
+        if self.rect.top < 0:
+            self.y_reflection = 0
+
+
 # Создаем игру и окно
 pygame.init()
 pygame.mixer.init()
