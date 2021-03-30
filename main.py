@@ -8,8 +8,8 @@ img_folder = os.path.join(py_folder, 'img') # Папка с изображени
 
 player_img = pygame.image.load(os.path.join(img_folder, 'cat.png')) # Добавление изображения
 
-WIDTH = 1600 // 2
-HEIGHT = 900 // 2
+WIDTH = 600
+HEIGHT = 900
 FPS = 60
 
 # Задаем цвета
@@ -19,34 +19,49 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-class Player(pygame.sprite.Sprite):
+class Player(pygame.sprite.Sprite):         # Спрайт игрока
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.image = player_img
         self.rect = self.image.get_rect()
-        self.rect.center = (WIDTH / 2, HEIGHT / 2)
+        self.rect.center = (WIDTH // 2, HEIGHT // 2)
+
+        self.speedx = 0
+        self.speedy = 0
+        
         self.x_reflection = 0
         self.y_reflection = 0
         
     def update(self):
-        if self.x_reflection == 0:
-            self.rect.x += 3
-        if self.x_reflection == 1:
-            self.rect.x -= 3
+        # Движение по координате "х"
+        self.speedx = 0
+        keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_LEFT]:
+            self.speedx = -8
+        if keystate[pygame.K_RIGHT]:
+            self.speedx = 8
+        self.rect.x += self.speedx
+
+        # Ограничение по "х"
         if self.rect.right > WIDTH:
-            self.x_reflection = 1
+            self.rect.right = WIDTH
         if self.rect.left < 0:
-            self.x_reflection = 0
-
-        if self.y_reflection == 0:
-            self.rect.y += 3
-        if self.y_reflection == 1:
-            self.rect.y -= 3
+            self.rect.left = 0
+        
+        # Движение по координате "y"
+        self.speedy = 0
+        keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_UP]:
+            self.speedy = -8
+        if keystate[pygame.K_DOWN]:
+            self.speedy = 8          
+        self.rect.y += self.speedy   
+        
+        # Ограничение по "y"
         if self.rect.bottom > HEIGHT:
-            self.y_reflection = 1
+            self.rect.bottom = HEIGHT
         if self.rect.top < 0:
-            self.y_reflection = 0
-
+            self.rect.top = 0       
 
 # Создаем игру и окно
 pygame.init()
@@ -54,18 +69,20 @@ pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("My Game")
 clock = pygame.time.Clock()
-all_sprites = pygame.sprite.Group()
+
+# Отображение на экране
+all_sprites = pygame.sprite.Group()     # Каждый созданный спрайт должен быть в группе all_sprites
 player = Player()
-all_sprites.add(player)
+all_sprites.add(player)     # Спрайт игрока добавляется в группу all_sprites
 
 # Цикл игры
 running = True
 while running:
-    # Держим цикл на правильной скорости
-    clock.tick(FPS)
+    
+    clock.tick(FPS) # Держим цикл на правильной скорости
+    
     # Ввод процесса (события)
     for event in pygame.event.get():
-        # check for closing window
         if event.type == pygame.QUIT:
             running = False
 
