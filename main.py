@@ -1,13 +1,13 @@
 #====================================================================
 # Импорт необходимых модулей
-#====================================================================
+#--------------------------------------------------------------------
 import pygame as pg
 import random as rnd
 import os
 
 #====================================================================
 # Параметры окна
-#====================================================================
+#--------------------------------------------------------------------
 WIDTH = 1600
 HEIGHT = 900
 FPS = 60
@@ -18,22 +18,32 @@ clock = pg.time.Clock()
 
 #====================================================================
 # Работа с файловой системой
-#====================================================================
+#--------------------------------------------------------------------
 py_folder = os.path.dirname(__file__)   # Папка файла питона
 img_folder = os.path.join(py_folder, 'img') # Папка с изображениями в папке питона
-
-cat_player_img = pg.image.load(os.path.join(img_folder,
-    'cat_move/cat_looks_right.png')).convert_alpha()
+bullets_folder = os.path.join(img_folder, 'bullets')
+cat_move_folder = os.path.join(img_folder, 'cat_move')
+#--------------------------------------------------------------------
+cat_player_img = pg.image.load(os.path.join(cat_move_folder,
+    'cat_looks_right.png')).convert_alpha()
+#--------------------------------------------------------------------
 evil_hand_img = pg.image.load(os.path.join(img_folder,
     'evil_hand.png')).convert_alpha()
+#--------------------------------------------------------------------
 background_img = pg.image.load(os.path.join(img_folder,
     'darkPurple.png')).convert_alpha()
-bullets_img = pg.image.load(os.path.join(img_folder,
-    'bullets/bullet_2.png')).convert_alpha()
+#--------------------------------------------------------------------
+bullets_img = []
+bullets_list = ['bullet_1.png', 'bullet_2.png','bullet_3.png',
+                 'bullet_4.png', 'bullet_5.png']
+for img in bullets_list:
+    bullets_img.append(pg.image.load(os.path.join(bullets_folder,
+                                                  img)).convert_alpha())
+#--------------------------------------------------------------------
 
 #====================================================================
 # Задание цветов
-#====================================================================
+#--------------------------------------------------------------------
 WHITE         = (255, 255, 255)
 BLACK         = (  0,   0,   0)
 RED           = (255,   0,   0)
@@ -60,6 +70,14 @@ def draw_ground():
             screen.blit(background_img, (0 + line_x*(background_rect.height),
                                          0 + line_y*(background_rect.height)))
 
+def debug_hits(self):
+    """
+    Рисование круга для проверки столкновений
+    """
+    self.rect = self.image.get_rect()
+    self.radius = self.image.get_height() // 2 - int(self.image.get_height() * 0.1)
+    pg.draw.circle(self.image, RED, self.rect.center, self.radius)
+
 #####################################################################
 # ОБЪЕКТЫ
 #####################################################################
@@ -71,9 +89,10 @@ class Cat(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self)
         self.image = pg.transform.scale(cat_player_img,
                                         (cat_player_img.get_width()*2,
-                                         cat_player_img.get_height()*2))
+                                         cat_player_img.get_height()*2))       
         self.rect = self.image.get_rect()
-        self.rect.center = (WIDTH // 2, HEIGHT // 2)
+        self.rect.centerx = WIDTH // 2
+        self.rect.centery = HEIGHT // 2
 
         self.speed_x = 0
         self.speed_y = 0
@@ -113,7 +132,7 @@ class Cat(pg.sprite.Sprite):
             self.rect.top = 0
         
     def shot(self, shot_direction):
-        bullet = Bullet(self.rect.centerx, self.rect.centery, shot_direction)
+        bullet = Bullet(self.rect.right + 10, self.rect.centery - 10, shot_direction)
         all_sprites.add(bullet)
         bullets.add(bullet)
         
@@ -122,6 +141,9 @@ class Cat(pg.sprite.Sprite):
 #--------------------------------------------------------------------
 class EvilHand(pg.sprite.Sprite):
     def evil_hand_pos(self):
+        """
+        Определяет начальную позицию и скорость
+        """
         self_rect_x = rnd.randrange(3*(-self.rect.width),
                                     WIDTH + 3*(self.rect.width))
         if self_rect_x > WIDTH // 2:
@@ -147,11 +169,31 @@ class EvilHand(pg.sprite.Sprite):
     
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.image = evil_hand_img
+        self.image_orig = evil_hand_img
+        self.image = self.image_orig.copy()
         self.rect = self.image.get_rect()
         EvilHand.evil_hand_pos(self)
         
+        self.rot = 0
+        self.rot_speed = rnd.randrange(-10, 10)
+        self.last_update = pg.time.get_ticks()
+    
+    def rotate(self):
+        """
+        Задает вращение
+        """
+        now = pg.time.get_ticks()
+        if now - self.last_update > 50:
+            self.last_update = now  
+            self.rot = (self.rot + self.rot_speed) % 360
+            new_image = pg.transform.rotate(self.image_orig, self.rot)
+            old_center = self.rect.center
+            self.image = new_image
+            self.rect = self.image.get_rect()
+            self.rect.center = old_center
+        
     def update(self):
+        self.rotate()
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y
         
@@ -166,24 +208,24 @@ class EvilHand(pg.sprite.Sprite):
 
         if self.rect.bottom < 0 - 3*self.rect.height:
             EvilHand.evil_hand_pos(self)
-
+        
 #====================================================================
 # Объект выстрелов
 #--------------------------------------------------------------------
 class Bullet(pg.sprite.Sprite):
     def __init__(self, x, y, shot_direction):
         pg.sprite.Sprite.__init__(self)
-        self.image = bullets_img
+        self.image = rnd.choice(bullets_img)
         self.rect = self.image.get_rect()
-        self.rect.bottom = y
+
         self.rect.centerx = x
+        self.rect.centery = y
+        
         self.speed_x = 0
         self.speed_y = 0
+        self.radius = self.image.get_height() // 2 - int(self.image.get_height() * 0.05)
 
     def update(self):
-        self.rect.x += self.speed_x
-        self.rect.y += self.speed_y
-        
         if (shot_direction == 'up'):
             self.speed_y = -10
         elif (shot_direction == 'down'):
@@ -192,7 +234,9 @@ class Bullet(pg.sprite.Sprite):
             self.speed_x = -10
         elif (shot_direction == 'right'):
             self.speed_x = 10
-
+            
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
                 
         # Удалить спрайт, если вышел за границу окна
         if self.rect.bottom < 0:
@@ -238,9 +282,9 @@ running = True
 while running:
     clock.tick(FPS) # Держим цикл на правильной скорости
 
-    #--------------------------------------------------------------------
+    #----------------------------------------------------------------
     # Проверка событий
-    #--------------------------------------------------------------------
+    #----------------------------------------------------------------
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
@@ -259,26 +303,29 @@ while running:
                 cat_player.shot(shot_direction)
             else:
                 shot_direction = None
-    #--------------------------------------------------------------------
+    #----------------------------------------------------------------
 
     all_sprites.update()    # Обновление всех спрайтов
     
-    #--------------------------------------------------------------------
+    #----------------------------------------------------------------
     # Проверка касания групп спрайтов
-    #--------------------------------------------------------------------
-    hits = pg.sprite.groupcollide(mobs, bullets, True, True)
+    #----------------------------------------------------------------
+    hits = pg.sprite.groupcollide(bullets, mobs, True, True,
+                                  pg.sprite.collide_rect_ratio(0.95))
     for hit in hits:
         eh = EvilHand()
         all_sprites.add(eh)
         mobs.add(eh)
 
-    #--------------------------------------------------------------------
+    #----------------------------------------------------------------
     # Проверка касания спрайта с группой спрайтов
-    #--------------------------------------------------------------------
-    hits = pg.sprite.spritecollide(cat_player, mobs, False) # Столкновение спрайтов 
+    #----------------------------------------------------------------
+    hits = pg.sprite.spritecollide(cat_player, mobs, False,
+                                   pg.sprite.collide_rect_ratio(0.95))
     if hits:
         running = False
     
+    #----------------------------------------------------------------
     draw_ground()   # Закрасить фон
     
     all_sprites.draw(screen)    # Отрисовка всех спрайтов
