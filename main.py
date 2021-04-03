@@ -64,7 +64,8 @@ img_cat_player = add_image(['cat_looks_right.png'], folder_img, folder_cat_move)
 img_cat_player = img_cat_player[0]
 
 img_bullets = add_image(['bullet_1.png', 'bullet_2.png',
-                'bullet_3.png', 'bullet_4.png', 'bullet_5.png'], folder_img, folder_bullets)
+                        'bullet_3.png', 'bullet_4.png', 'bullet_5.png'],
+                        folder_img, folder_bullets)
 
 img_evil_hand = add_image(['evil_hand.png'], folder_img)
 img_evil_hand = img_evil_hand[0]
@@ -89,7 +90,8 @@ def add_sound(add_sound_list, folder_snd, subfolder_snd=None):
     folder_snd = os.path.join(folder_py, str(folder_snd))   # Определение папки со звуками
     added_sound_list = []
     if (subfolder_snd != None):
-        subfolder_snd = os.path.join(folder_snd, str(subfolder_snd))    # Определение подпапки со звуками
+        subfolder_snd = os.path.join(folder_snd,
+                                     str(subfolder_snd))    # Определение подпапки со звуками
         for snd in add_sound_list:
             added_sound_list.append(pg.mixer.Sound(os.path.join(subfolder_snd, snd)))
     else:
@@ -111,7 +113,8 @@ def add_music(add_music_list, folder_snd, subfolder_snd=None):
     folder_snd = os.path.join(folder_py, str(folder_snd))   # Определение папки с музыкой
     added_music_list = []
     if (subfolder_snd != None):
-        subfolder_snd = os.path.join(folder_snd, str(subfolder_snd))    # Определение подпапки с музыкой
+        subfolder_snd = os.path.join(folder_snd,
+                                     str(subfolder_snd))    # Определение подпапки с музыкой
         for mus in add_music_list:
             added_music_list.append(pg.mixer.music.load(os.path.join(subfolder_snd, mus)))
     else:
@@ -124,7 +127,8 @@ soundtrack_1 = soundtrack_1[0]
 
 snd_shoot = add_sound(['shoot_1.wav', 'shoot_2.wav', 'shoot_3.wav'], folder_snd)
 
-snd_explosion = add_sound(['explosion_1.wav', 'explosion_2.wav', 'explosion_3.wav'], folder_snd)
+snd_explosion = add_sound(['explosion_1.wav',
+                           'explosion_2.wav', 'explosion_3.wav'], folder_snd)
 #====================================================================
 # Задание цветов
 #--------------------------------------------------------------------
@@ -176,6 +180,12 @@ def draw_text(surf, text, size, x, y):
     text_rect.midtop = (x, y)
     surf.blit(text_surface, text_rect)
 
+def add_mob():
+    """Добавляет врагов."""
+    evil_h = EvilHand()
+    all_sprites.add(evil_h) # Добавляем спрайт в группу all_sprites
+    mobs.add(evil_h)    # Добавляем спрайт в группу mobs
+
 #####################################################################
 # ОБЪЕКТЫ
 #####################################################################
@@ -196,6 +206,8 @@ class Cat(pg.sprite.Sprite):
 
         self.speed_x = 0
         self.speed_y = 0
+        
+        self.health = 100
         
     def update(self):
         self.speed_x = 0
@@ -374,13 +386,11 @@ bullets     = pg.sprite.Group()
 #====================================================================
 # Добавление спрайтов в группы спрайтов
 #--------------------------------------------------------------------
-cat_player = Cat()
-all_sprites.add(cat_player) # Добавляем спрайт в группу all_sprites
+player_cat = Cat()
+all_sprites.add(player_cat) # Добавляем спрайт в группу all_sprites
 
-for i in range(rnd.randrange(15, 30)):
-    evil_h = EvilHand()
-    all_sprites.add(evil_h) # Добавляем спрайт в группу all_sprites
-    mobs.add(evil_h)    # Добавляем спрайт в группу mobs
+for i in range(rnd.randrange(10, 35)):
+    add_mob()   # Добавить врагов
 #--------------------------------------------------------------------
 
 #====================================================================
@@ -406,16 +416,16 @@ while running:
         elif event.type == pg.KEYDOWN:
             if (event.key == pg.K_UP):
                 shot_direction = 'up'
-                cat_player.shoot(shot_direction)
+                player_cat.shoot(shot_direction)
             elif (event.key == pg.K_DOWN):
                 shot_direction = 'down'
-                cat_player.shoot(shot_direction)
+                player_cat.shoot(shot_direction)
             elif (event.key == pg.K_LEFT):
                 shot_direction = 'left'
-                cat_player.shoot(shot_direction)
+                player_cat.shoot(shot_direction)
             elif (event.key == pg.K_RIGHT):
                 shot_direction = 'right'
-                cat_player.shoot(shot_direction)
+                player_cat.shoot(shot_direction)
             else:
                 shot_direction = None
     #----------------------------------------------------------------
@@ -430,22 +440,27 @@ while running:
     for hit in hits:
         score += 1
         rnd.choice(snd_explosion).play()
-        eh = EvilHand()
-        all_sprites.add(eh)
-        mobs.add(eh)
-
+        for i in range(rnd.randrange(1, 3)):
+            add_mob()
     #----------------------------------------------------------------
     # Проверка касания спрайта с группой спрайтов
     #----------------------------------------------------------------
-    hits = pg.sprite.spritecollide(cat_player, mobs, False,
+    hits = pg.sprite.spritecollide(player_cat, mobs, True,
                                    pg.sprite.collide_rect_ratio(0.95))
-    if hits:
-        running = False
-    
+    for hit in hits:
+        player_cat.health -= abs(hit.rot_speed) + abs(hit.speed_x) + abs(hit.speed_y)
+        for i in range(rnd.randrange(3, 5)):
+            add_mob()
+        if player_cat.health <= 0:
+            player_cat.health = 0
+            running = False
+
     #----------------------------------------------------------------
     draw_ground()   # Закрасить фон
     all_sprites.draw(screen)    # Отрисовка всех спрайтов
-    draw_text(screen, str('Уничтожено рук: %s' % score), 20, WIDTH // 2, 10)
+    draw_text(screen, str('Здоровье: %s' % player_cat.health), 
+              30, WIDTH // 2, HEIGHT - 50)
+    draw_text(screen, str('Уничтожено рук: %s' % score), 30, WIDTH // 2, 10)
 #-------------------------------------------------------------------- 
     pg.display.flip()   # После отрисовки всего, переворачиваем экран
 #--------------------------------------------------------------------
