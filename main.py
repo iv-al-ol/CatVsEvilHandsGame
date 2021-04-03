@@ -1,25 +1,39 @@
-# Pygame шаблон - скелет для нового проекта Pygame
+#====================================================================
+# Импорт необходимых модулей
+#====================================================================
 import pygame
 import random
 import os
 
+
+#====================================================================
+# Работа с файловой системой
+#====================================================================
 py_folder = os.path.dirname(__file__)   # Папка файла питона
 img_folder = os.path.join(py_folder, 'img') # Папка с изображениями в папке питона
 
-player_img = pygame.image.load(os.path.join(img_folder, 'cat.png')) # Добавление изображения
+player_img = pygame.image.load(os.path.join(img_folder, 'cat.png'))
 evil_hand_img = pygame.image.load(os.path.join(img_folder, 'evil_hand.png'))
 
-WIDTH = 600
+#====================================================================
+# Разрешение экрана и FPS
+#====================================================================
+WIDTH = 1600
 HEIGHT = 900
 FPS = 60
 
-# Задаем цвета
+#====================================================================
+# Задание цветов
+#====================================================================
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
+#====================================================================
+# Объект игрока
+#====================================================================
 class Player(pygame.sprite.Sprite):         # Спрайт игрока
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -62,18 +76,18 @@ class Player(pygame.sprite.Sprite):         # Спрайт игрока
         if self.rect.bottom > HEIGHT:
             self.rect.bottom = HEIGHT
         if self.rect.top < 0:
-            self.rect.top = 0       
-
-class Evil_Hand(pygame.sprite.Sprite):  # Спрайт злой руки
-    
+            self.rect.top = 0
+            
+#====================================================================
+# Объект противника
+#====================================================================
+class EvilHand(pygame.sprite.Sprite):  # Спрайт злой руки
     def evil_hand_pos(self):
-        
         self_rect_x = random.randrange(3*(-self.rect.width), WIDTH + 3*(self.rect.width))
         if self_rect_x > WIDTH // 2:
             self.rect.x = random.randrange(WIDTH + self.rect.width, WIDTH + 3*(self.rect.width))
         else:
             self.rect.x = random.randrange(3*(-self.rect.width), (-self.rect.width))
-
         self.rect.y = random.randrange(3*(-self.rect.height), HEIGHT + 3*(self.rect.height))
         
         self_speed_x = random.randrange(-8, 8)
@@ -92,44 +106,56 @@ class Evil_Hand(pygame.sprite.Sprite):  # Спрайт злой руки
         pygame.sprite.Sprite.__init__(self)
         self.image = evil_hand_img
         self.rect = self.image.get_rect()
-        Evil_Hand.evil_hand_pos(self)
+        EvilHand.evil_hand_pos(self)
         
     def update(self):
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y
         
         if self.rect.left > WIDTH + 3*self.rect.width:
-            Evil_Hand.evil_hand_pos(self)
+            EvilHand.evil_hand_pos(self)
             
         if self.rect.right < 0 - 3*self.rect.width:
-            Evil_Hand.evil_hand_pos(self)
+            EvilHand.evil_hand_pos(self)
             
         if self.rect.top > HEIGHT + 3*self.rect.height:
-            Evil_Hand.evil_hand_pos(self)
+            EvilHand.evil_hand_pos(self)
 
         if self.rect.bottom < 0 - 3*self.rect.height:
-            Evil_Hand.evil_hand_pos(self)
+            EvilHand.evil_hand_pos(self)
 
+#====================================================================
 # Создаем игру и окно
+#====================================================================
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("My Game")
 clock = pygame.time.Clock()
+#====================================================================
 
-# Отображение на экране
-all_sprites = pygame.sprite.Group() # Создаем в группу all_sprites
-mobs = pygame.sprite.Group()
+#====================================================================
+# Создание групп спрайтов
+#====================================================================
+all_sprites = pygame.sprite.Group()
+mobs        = pygame.sprite.Group()
+bullet_eyes = pygame.sprite.Group()
+#====================================================================
 
+#====================================================================
+# Добавление справтов в группы спрайтов
+#====================================================================
 player = Player()
-all_sprites.add(player)     # Добавляем спрайт в группу all_sprites
+all_sprites.add(player) # Добавляем спрайт в группу all_sprites
 
-for i in range(random.randrange(10, 20)):
-    evil_h = Evil_Hand()
+for i in range(random.randrange(15, 30)):
+    evil_h = EvilHand()
     all_sprites.add(evil_h) # Добавляем спрайт в группу all_sprites
     mobs.add(evil_h)    # Добавляем спрайт в группу mobs
 
+#====================================================================
 # Цикл игры
+#====================================================================
 running = True
 while running:
     clock.tick(FPS) # Держим цикл на правильной скорости
@@ -138,12 +164,18 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
+                  
     all_sprites.update()    # Обновление
     
-    screen.fill(BLACK)
+    hits = pygame.sprite.spritecollide(player, mobs, False) # Столкновение спрайтов 
+    if hits:
+        running = False
+    
+    screen.fill(BLACK)  # Заливка фона черным цветом
+    
     all_sprites.draw(screen)    # Отрисовка всех спрайтов
     
     pygame.display.flip()   # После отрисовки всего, переворачиваем экран
+#====================================================================
 
 pygame.quit()
