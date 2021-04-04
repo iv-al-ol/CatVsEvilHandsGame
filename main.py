@@ -32,43 +32,76 @@ folder_py = os.path.dirname(__file__)   # Директория .py файла
 #--------------------------------------------------------------------
 # Добавление рисунков
 #--------------------------------------------------------------------
-def add_image(add_image_list, folder_img):
-    """Добавляет изображения в игру.
+def add_image(add_image_list, folder_img, quantity_img=None):
+    """Добавляет изображение в игру.
     
     add_image_list -> tuple: Имена рисунков с расширениями файлов
         (например: ['pic_1.png', 'pic_2.png']);
+    Если quantity_img != None:
+        add_image_list -> str: Имя типа рисунка без номера и расширения
+            (например: 'pic_');
+          
     folder_img -> str: Имя папки с изображениями
         (например: 'img\\folder');
+    quantity_img -> int: Количество рисунков со схожими названиями;
+        (например: при ['pic_1.png', 'pic_2.png'] должно быть 2);
     
     Возвращает сконвертированные изображения в составе списка.
     
     """
     folder_img = os.path.join(folder_py, str(folder_img))   # Определение папки с изображениями
     added_img_list = []
-    for img in add_image_list:    
-        added_img_list.append(pg.image.load(os.path.join(folder_img, img)).convert_alpha())
+    if (quantity_img != None):
+        for num in range(quantity_img):
+            filename = ('%s{}.png' % add_image_list).format(num)
+            print(filename)
+            added_img_list.append(pg.image.load(os.path.join(folder_img, filename)).convert_alpha())
+    else:
+        for img in add_image_list:    
+            added_img_list.append(pg.image.load(os.path.join(folder_img, img)).convert_alpha())
+        
     return added_img_list
 
 def scale_image(scaling_img, zoom_sise):
-    """Масштабирует изображения.
+    """Масштабирует изображение.
     
     scaling_img: Источник изображения;
-    zoom_sise: Величина масштабирования
-        (например: 0.5 уменьшит размер изображения в два раза);
+    zoom_sise -> float: Величина масштабирования в %
+        (например: 50 уменьшит размер изображения в два раза);
     
     """
     transform_img = pg.transform.scale(scaling_img,
-                                       (scaling_img.get_width()*zoom_sise,
-                                        scaling_img.get_height()*zoom_sise))
+                                       (scaling_img.get_width()*zoom_sise // 100,
+                                        scaling_img.get_height()*zoom_sise // 100))
     return transform_img
+
+def add_and_scale_image(img_name, folder_img, quantity_img, zoom_sise):
+    """Добавляет и масштабирует однотипные изображения циклом.
     
+    img_name -> str: Имя типа рисунка без номера и расширения
+        (например: 'pic_');
+    folder_img -> str: Имя папки с изображениями
+        (например: 'img\\folder');
+    quantity_img -> int: Количество рисунков со схожими названиями;
+        (например: при ['pic_1.png', 'pic_2.png'] должно быть 2);
+    zoom_sise -> float: Величина масштабирования в %
+        (например: 50 уменьшит размер изображения в два раза);
+    
+    """
+    img_list_name = []
+    for num in range(quantity_img):
+        filename = ('%s{}.png' % img_name).format(num)
+        img = pg.image.load(os.path.join(folder_img, filename)).convert_alpha()
+        
+        img_transform = pg.transform.scale(img, (img.get_width()*zoom_sise // 100, img.get_height()*zoom_sise // 100))
+        img_list_name.append(img_transform)
+    return img_list_name
+ 
 img_cat_player = add_image(['cat_looks_right.png'], 'img\\cat_move')
 img_cat_player = img_cat_player[0]
-img_cat_player = scale_image(img_cat_player, 2)
+img_cat_player = scale_image(img_cat_player, )
 
-img_bullets = add_image(['bullet_1.png', 'bullet_2.png',
-                        'bullet_3.png', 'bullet_4.png', 'bullet_5.png'],
-                        'img\\bullets')
+img_bullets = add_image('bullet_', 'img\\bullets', 5)
 
 img_evil_hand = add_image(['evil_hand.png'], 'img')
 img_evil_hand = img_evil_hand[0]
@@ -77,11 +110,10 @@ img_background = add_image(['darkPurple.png'], 'img')
 img_background = img_background[0]
 
 img_blood_anim = {}
-img_blood_anim['small'] = []
-img_blood_anim['medium'] = []
-img_blood_anim['large'] = []
-
-
+img_blood_anim['small'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 50)
+img_blood_anim['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 100)
+img_blood_anim['large'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 200)
+print(img_blood_anim)
 
 #--------------------------------------------------------------------
 # Добавление звуков
