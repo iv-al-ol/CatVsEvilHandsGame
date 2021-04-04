@@ -143,7 +143,7 @@ DARK_BROWN    = (101,  67,  33)
 
 
 #####################################################################
-# Функции
+# Функции для игрового цикла
 #####################################################################
 def draw_ground():
     """Закрашивает фон экрана рисунком"""
@@ -169,8 +169,8 @@ def draw_text(surf, text, size, x, y):
     surf: Поверхность отображения текста;
     text: Отображаемый текст;
     size: Размер шрифта;
-    x: Координата середины блока текста по x 
-    y: Координата верха блока текста по y
+    x: Координата середины блока текста по x;
+    y: Координата верха блока текста по y;
     
     """
     font_name = pg.font.match_font('arial')
@@ -186,6 +186,28 @@ def add_mob():
     all_sprites.add(evil_h) # Добавляем спрайт в группу all_sprites
     mobs.add(evil_h)    # Добавляем спрайт в группу mobs
 
+def draw_health_bar(surf, x, y, filling, color):
+    """Выводит полоску на поверхности.
+    
+    surf: Поверхность отображения полоски;
+    x: Координата середины полоски по x;
+    y: Координата верха блока текста по y;
+    filling: Величина заливки полоски;
+    clor: Цвет заливки;
+    
+    """
+    if filling < 0:
+        filling = 0
+    BAR_LENGTH = WIDTH // 4
+    BAR_HEIGHT = HEIGHT // 20
+    fill = (filling / 100) * BAR_LENGTH
+    x = x - (BAR_LENGTH // 2)
+    y = y + (BAR_HEIGHT // 2)
+    outline_rect = pg.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
+    fill_rect = pg.Rect(x, y, fill, BAR_HEIGHT)
+    pg.draw.rect(surf, color, fill_rect)
+    pg.draw.rect(surf, WHITE, outline_rect, 2)
+    
 #####################################################################
 # ОБЪЕКТЫ
 #####################################################################
@@ -194,7 +216,7 @@ def add_mob():
 #--------------------------------------------------------------------
 class Cat(pg.sprite.Sprite):
     """Объект игрока. Выводит спрайт кота."""
-    
+
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
         self.image = pg.transform.scale(img_cat_player,
@@ -209,49 +231,81 @@ class Cat(pg.sprite.Sprite):
         
         self.health = 100
         
+        self.shoot_delay = 250
+        self.last_shot = pg.time.get_ticks()
+        self.shoot_speed_x = 0
+        self.shoot_speed_y = 0
+
+    def shoot(self):
+        """Выводит спрайт снаряда."""
+        now = pg.time.get_ticks()
+        if now - self.last_shot > self.shoot_delay:
+            self.last_shot = now    
+            bullet = Bullet(self.rect.right + 10, self.rect.centery - 10, self.shoot_speed_x, self.shoot_speed_y)
+            all_sprites.add(bullet)
+            bullets.add(bullet)
+            rnd.choice(snd_shoot).play()
+
     def update(self):
         self.speed_x = 0
         self.speed_y = 0
         keystate = pg.key.get_pressed()
         
-        # Движение по координате "х"
-        if keystate[pg.K_a]:
-            self.speed_x = -8
-        if keystate[pg.K_d]:
-            self.speed_x = 8
-        self.rect.x += self.speed_x
+        def move(self):
+            """Описывает движения объекта "Кот"."""
+            # Движение по координате "х"
+            if keystate[pg.K_a]:
+                self.speed_x = -8
+            if keystate[pg.K_d]:
+                self.speed_x = 8
+            self.rect.x += self.speed_x
+            
+            # Движение по координате "y"
+            if keystate[pg.K_w]:
+                self.speed_y = -8
+            if keystate[pg.K_s]:
+                self.speed_y = 8          
+            self.rect.y += self.speed_y
+            
+            # Ограничение по "х"
+            if self.rect.right > WIDTH:
+                self.rect.right = WIDTH
+            if self.rect.left < 0:
+                self.rect.left = 0
+                    
+            # Ограничение по "y"
+            if self.rect.bottom > HEIGHT - HEIGHT // 15:
+                self.rect.bottom = HEIGHT - HEIGHT // 15
+            if self.rect.top < HEIGHT // 20:
+                self.rect.top = HEIGHT // 20
+        move(self)
         
-        # Движение по координате "y"
-        if keystate[pg.K_w]:
-            self.speed_y = -8
-        if keystate[pg.K_s]:
-            self.speed_y = 8          
-        self.rect.y += self.speed_y
-        
-        # Ограничение по "х"
-        if self.rect.right > WIDTH:
-            self.rect.right = WIDTH
-        if self.rect.left < 0:
-            self.rect.left = 0
+        def shoot_speed_calc(self):
+            """Определяет скорость полета снарядов."""
+            if (keystate[pg.K_LEFT]):
+                self.shoot_speed_x = -10
+                self.shoot_speed_y = 0
+                return self.shoot_speed_x, self.shoot_speed_y
+            elif keystate[pg.K_RIGHT]:
+                self.shoot_speed_x = 10
+                self.shoot_speed_y = 0
+                return self.shoot_speed_x, self.shoot_speed_y
+            elif keystate[pg.K_UP]:
+                self.shoot_speed_x = 0
+                self.shoot_speed_y = -10
+                return self.shoot_speed_x, self.shoot_speed_y
+            elif keystate[pg.K_DOWN]:
+                self.shoot_speed_x = 0
+                self.shoot_speed_y = 10
+                return self.shoot_speed_x, self.shoot_speed_y
+        shoot_speed_calc(self)
                 
-        # Ограничение по "y"
-        if self.rect.bottom > HEIGHT:
-            self.rect.bottom = HEIGHT
-        if self.rect.top < 0:
-            self.rect.top = 0
-        
-    def shoot(self, shot_direction):
-        """Выводит спрайт снаряда.
-        
-        shot_direction: направление полета снаряда.
-        Принимает значения типа str(): 'up', 'down', 'left', 'right'.
-        
-        """
-        bullet = Bullet(self.rect.right + 10, self.rect.centery - 10, shot_direction)
-        all_sprites.add(bullet)
-        bullets.add(bullet)
-        rnd.choice(snd_shoot).play()
-        
+        def shoot_direction():
+            """Вызывает функцию выстрела при нажатии клавиш стрельбы."""
+            if (keystate[pg.K_LEFT] or keystate[pg.K_RIGHT] or 
+                keystate[pg.K_UP] or keystate[pg.K_DOWN]):
+                    self.shoot()
+        shoot_direction()
         
 #====================================================================
 # Объект противника
@@ -296,9 +350,7 @@ class EvilHand(pg.sprite.Sprite):
         self.last_update = pg.time.get_ticks()
     
     def rotate(self):
-        """
-        Задает вращение
-        """
+        """Задает вращение."""
         now = pg.time.get_ticks()
         if now - self.last_update > 50:
             self.last_update = now  
@@ -331,33 +383,32 @@ class EvilHand(pg.sprite.Sprite):
 # Объект выстрелов
 #--------------------------------------------------------------------
 class Bullet(pg.sprite.Sprite):
-    """Объект снарядов. Выводит спрайт снарядов."""
+    """Объект снарядов. Выводит спрайт снарядов.
     
-    def __init__(self, x, y, shot_direction):
+    x: Положение вывода снаряда по x;
+    y: Положение вывода снаряда по y;
+    shoot_speed_x: Скорость снаряда по x;
+    shoot_speed_y: Скрость сняряда по y;
+    
+    """
+    
+    def __init__(self, x, y, shoot_speed_x, shoot_speed_y):
         pg.sprite.Sprite.__init__(self)
         self.image = rnd.choice(img_bullets)
         self.rect = self.image.get_rect()
 
         self.rect.centerx = x
         self.rect.centery = y
+
+        self.speed_x = shoot_speed_x
+        self.speed_y = shoot_speed_y
         
-        self.speed_x = 0
-        self.speed_y = 0
         self.radius = self.image.get_height() // 2 - int(self.image.get_height() * 0.05)
 
     def update(self):
-        if (shot_direction == 'up'):
-            self.speed_y = -10
-        elif (shot_direction == 'down'):
-            self.speed_y = 10
-        elif (shot_direction == 'left'):
-            self.speed_x = -10
-        elif (shot_direction == 'right'):
-            self.speed_x = 10
-            
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y
-                
+                 
         # Удалить спрайт, если вышел за границу окна
         if self.rect.bottom < 0:
             self.kill()
@@ -413,21 +464,6 @@ while running:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
-        elif event.type == pg.KEYDOWN:
-            if (event.key == pg.K_UP):
-                shot_direction = 'up'
-                player_cat.shoot(shot_direction)
-            elif (event.key == pg.K_DOWN):
-                shot_direction = 'down'
-                player_cat.shoot(shot_direction)
-            elif (event.key == pg.K_LEFT):
-                shot_direction = 'left'
-                player_cat.shoot(shot_direction)
-            elif (event.key == pg.K_RIGHT):
-                shot_direction = 'right'
-                player_cat.shoot(shot_direction)
-            else:
-                shot_direction = None
     #----------------------------------------------------------------
 
     all_sprites.update()    # Обновление всех спрайтов
@@ -435,9 +471,9 @@ while running:
     #----------------------------------------------------------------
     # Проверка касания групп спрайтов
     #----------------------------------------------------------------
-    hits = pg.sprite.groupcollide(bullets, mobs, True, True,
+    hits_bullets_mob = pg.sprite.groupcollide(bullets, mobs, True, True,
                                   pg.sprite.collide_rect_ratio(0.95))
-    for hit in hits:
+    for hit in hits_bullets_mob:
         score += 1
         rnd.choice(snd_explosion).play()
         for i in range(rnd.randrange(1, 3)):
@@ -445,9 +481,9 @@ while running:
     #----------------------------------------------------------------
     # Проверка касания спрайта с группой спрайтов
     #----------------------------------------------------------------
-    hits = pg.sprite.spritecollide(player_cat, mobs, True,
+    hits_player_mob = pg.sprite.spritecollide(player_cat, mobs, True,
                                    pg.sprite.collide_rect_ratio(0.95))
-    for hit in hits:
+    for hit in hits_player_mob:
         player_cat.health -= abs(hit.rot_speed) + abs(hit.speed_x) + abs(hit.speed_y)
         for i in range(rnd.randrange(3, 5)):
             add_mob()
@@ -457,10 +493,14 @@ while running:
 
     #----------------------------------------------------------------
     draw_ground()   # Закрасить фон
+    
     all_sprites.draw(screen)    # Отрисовка всех спрайтов
+    
+    draw_health_bar(screen, WIDTH // 2, HEIGHT - HEIGHT // 11, player_cat.health, RED)
     draw_text(screen, str('Здоровье: %s' % player_cat.health), 
-              30, WIDTH // 2, HEIGHT - 50)
-    draw_text(screen, str('Уничтожено рук: %s' % score), 30, WIDTH // 2, 10)
+              30, WIDTH // 2, HEIGHT - HEIGHT // 16)
+    draw_text(screen, str('Уничтожено рук: %s' % score), 30, WIDTH // 2, HEIGHT // 90)
+    
 #-------------------------------------------------------------------- 
     pg.display.flip()   # После отрисовки всего, переворачиваем экран
 #--------------------------------------------------------------------
