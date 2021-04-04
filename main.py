@@ -52,7 +52,6 @@ def add_image(add_image_list, folder_img, quantity_img=None):
     if (quantity_img != None):
         for num in range(quantity_img):
             filename = ('%s{}.png' % add_image_list).format(num)
-            print(filename)
             added_img_list.append(pg.image.load(os.path.join(folder_img, filename)).convert_alpha())
     else:
         for img in add_image_list:    
@@ -114,10 +113,31 @@ img_evil_hand = img_evil_hand[0]
 img_background = add_image(['darkPurple.png'], 'img')
 img_background = img_background[0]
 
+
 img_blood_anim_1 = {}
-img_blood_anim_1['small'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 100)
-img_blood_anim_1['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 200)
-img_blood_anim_1['large'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 200)
+img_blood_anim_1['small'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 21, 100)
+img_blood_anim_1['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 21, 200)
+img_blood_anim_1['large'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 21, 300)
+
+img_blood_anim_2 = {}
+img_blood_anim_2['small'] = add_and_scale_image('1_', 'img\\blood\\anim_2', 21, 100)
+img_blood_anim_2['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_2', 21, 200)
+img_blood_anim_2['large'] = add_and_scale_image('1_', 'img\\blood\\anim_2', 21, 300)
+
+img_blood_anim_3 = {}
+img_blood_anim_3['small'] = add_and_scale_image('1_', 'img\\blood\\anim_3', 21, 100)
+img_blood_anim_3['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_3', 21, 200)
+img_blood_anim_3['large'] = add_and_scale_image('1_', 'img\\blood\\anim_3', 21, 300)
+
+img_blood_anim_4 = {}
+img_blood_anim_4['small'] = add_and_scale_image('1_', 'img\\blood\\anim_4', 21, 100)
+img_blood_anim_4['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_4', 21, 200)
+img_blood_anim_4['large'] = add_and_scale_image('1_', 'img\\blood\\anim_4', 21, 300)
+
+img_blood_anim_5 = {}
+img_blood_anim_5['small'] = add_and_scale_image('1_', 'img\\blood\\anim_5', 21, 100)
+img_blood_anim_5['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_5', 21, 200)
+img_blood_anim_5['large'] = add_and_scale_image('1_', 'img\\blood\\anim_5', 21, 300)
 
 #####################################################################
 # Функции для звуков
@@ -539,7 +559,7 @@ while running:
     all_sprites.update()    # Обновление всех спрайтов
     
     #----------------------------------------------------------------
-    # Проверка касания групп ИГРОК - РУКИ
+    # Проверка касания групп СНАРЯД - РУКИ
     #----------------------------------------------------------------
     hits_bullets_hands = pg.sprite.groupcollide(bullets, hands, True, True,
                                   pg.sprite.collide_rect_ratio(0.95))
