@@ -27,11 +27,9 @@ clock = pg.time.Clock()
 #--------------------------------------------------------------------
 folder_py = os.path.dirname(__file__)   # Директория .py файла
 
-#====================================================================
-# Добавление файлов игры
-#--------------------------------------------------------------------
-# Добавление рисунков
-#--------------------------------------------------------------------
+#####################################################################
+# Функции для изображений
+#####################################################################
 def add_image(add_image_list, folder_img, quantity_img=None):
     """Добавляет изображение в игру.
     
@@ -96,10 +94,13 @@ def add_and_scale_image(img_name, folder_img, quantity_img, zoom_sise):
         img_transform = pg.transform.scale(img, (img.get_width()*zoom_sise // 100, img.get_height()*zoom_sise // 100))
         img_list_name.append(img_transform)
     return img_list_name
- 
+
+#====================================================================
+# Добавление изображений
+#--------------------------------------------------------------------
 img_cat_player = add_image(['cat_looks_right.png'], 'img\\cat_move')
 img_cat_player = img_cat_player[0]
-img_cat_player = scale_image(img_cat_player, )
+img_cat_player = scale_image(img_cat_player, 200)
 
 img_bullets = add_image('bullet_', 'img\\bullets', 5)
 
@@ -109,15 +110,14 @@ img_evil_hand = img_evil_hand[0]
 img_background = add_image(['darkPurple.png'], 'img')
 img_background = img_background[0]
 
-img_blood_anim = {}
-img_blood_anim['small'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 50)
-img_blood_anim['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 100)
-img_blood_anim['large'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 200)
-print(img_blood_anim)
+img_blood_anim_1 = {}
+img_blood_anim_1['small'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 100)
+img_blood_anim_1['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 200)
+img_blood_anim_1['large'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 11, 200)
 
-#--------------------------------------------------------------------
-# Добавление звуков
-#--------------------------------------------------------------------
+#####################################################################
+# Функции для звуков
+#####################################################################
 def add_sound(add_sound_list, folder_snd):
     """Добавляет звуки в игру.
     
@@ -152,6 +152,9 @@ def add_music(add_music_list, folder_snd):
         added_music_list.append(pg.mixer.music.load(os.path.join(folder_snd, mus)))
     return added_music_list
 
+#====================================================================
+# Добавление звуков
+#--------------------------------------------------------------------
 soundtrack_1 = add_music(['soundtrack_1.mp3'], 'snd')
 soundtrack_1 = soundtrack_1[0]
 
@@ -159,6 +162,7 @@ snd_shoot = add_sound(['shoot_1.wav', 'shoot_2.wav', 'shoot_3.wav'], 'snd')
 
 snd_explosion = add_sound(['explosion_1.wav',
                            'explosion_2.wav', 'explosion_3.wav'], 'snd')
+
 #====================================================================
 # Задание цветов
 #--------------------------------------------------------------------
@@ -170,7 +174,6 @@ BLUE          = (  0,   0, 255)
 YELLOW        = (255, 255,   0)
 JADE          = (  0, 168, 107)
 DARK_BROWN    = (101,  67,  33)
-
 
 #####################################################################
 # Функции для игрового цикла
@@ -210,11 +213,11 @@ def draw_text(surf, text, size, x, y):
     text_rect.midtop = (x, y)
     surf.blit(text_surface, text_rect)
 
-def add_mob():
+def add_hands():
     """Добавляет врагов."""
     evil_h = EvilHand()
     all_sprites.add(evil_h) # Добавляем спрайт в группу all_sprites
-    mobs.add(evil_h)    # Добавляем спрайт в группу mobs
+    hands.add(evil_h)    # Добавляем спрайт в группу hands
 
 def draw_health_bar(surf, x, y, filling, color):
     """Выводит полоску на поверхности.
@@ -405,7 +408,37 @@ class EvilHand(pg.sprite.Sprite):
 
         if self.rect.bottom < 0 - 3*self.rect.height:
             EvilHand.evil_hand_pos(self)
+
+
+#====================================================================
+# Объект кровавых взрывов
+#--------------------------------------------------------------------
+class BloodExplosion(pg.sprite.Sprite):
+    """Объект кровавых взрывов. Выводит на экран кровавый взрыв."""
+    
+    def __init__(self, center, size):
+        pg.sprite.Sprite.__init__(self)
+        self.size = size
+        self.image = img_blood_anim_1[self.size][0]
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+        self.frame = 0
+        self.last_update = pg.time.get_ticks()
+        self.frame_rate = 50
         
+    def update(self):
+        now = pg.time.get_ticks()
+        
+        if now - self.last_update > self.frame_rate:
+            self.last_update = now
+            self.frame += 1
+            if self.frame == len(img_blood_anim_1[self.size]):    # Если прошел все кадры, то удалить объект
+                self.kill()
+            else:
+                center = self.rect.center
+                self.image = img_blood_anim_1[self.size][self.frame]
+                self.rect = self.image.get_rect()
+                self.rect.center = center    
         
 #====================================================================
 # Объект выстрелов
@@ -458,7 +491,7 @@ pg.init()
 # Создание групп спрайтов
 #--------------------------------------------------------------------
 all_sprites = pg.sprite.Group()
-mobs        = pg.sprite.Group()
+hands        = pg.sprite.Group()
 bullets     = pg.sprite.Group()
 #--------------------------------------------------------------------
 
@@ -469,7 +502,7 @@ player_cat = Cat()
 all_sprites.add(player_cat) # Добавляем спрайт в группу all_sprites
 
 for i in range(rnd.randrange(10, 35)):
-    add_mob()   # Добавить врагов
+    add_hands()   # Добавить врагов
 #--------------------------------------------------------------------
 
 #====================================================================
@@ -497,24 +530,28 @@ while running:
     all_sprites.update()    # Обновление всех спрайтов
     
     #----------------------------------------------------------------
-    # Проверка касания групп спрайтов
+    # Проверка касания групп ИГРОК - РУКИ
     #----------------------------------------------------------------
-    hits_bullets_mob = pg.sprite.groupcollide(bullets, mobs, True, True,
+    hits_bullets_hands = pg.sprite.groupcollide(bullets, hands, True, True,
                                   pg.sprite.collide_rect_ratio(0.95))
-    for hit in hits_bullets_mob:
+    for hit in hits_bullets_hands:
         score += 1
         rnd.choice(snd_explosion).play()
+        blood_explosion = BloodExplosion(hit.rect.center, 'medium')
+        all_sprites.add(blood_explosion)
         for i in range(rnd.randrange(1, 3)):
-            add_mob()
+            add_hands()
     #----------------------------------------------------------------
-    # Проверка касания спрайта с группой спрайтов
+    # Проверка касания спрайта ИГРОК с РУКИ
     #----------------------------------------------------------------
-    hits_player_mob = pg.sprite.spritecollide(player_cat, mobs, True,
+    hits_player_hands = pg.sprite.spritecollide(player_cat, hands, True,
                                    pg.sprite.collide_rect_ratio(0.95))
-    for hit in hits_player_mob:
+    for hit in hits_player_hands:
         player_cat.health -= abs(hit.rot_speed) + abs(hit.speed_x) + abs(hit.speed_y)
+        blood_explosion = BloodExplosion(hit.rect.center, 'small')
+        all_sprites.add(blood_explosion)
         for i in range(rnd.randrange(3, 5)):
-            add_mob()
+            add_hands()
         if player_cat.health <= 0:
             player_cat.health = 0
             running = False
