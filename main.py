@@ -25,110 +25,108 @@ clock = pg.time.Clock()
 #====================================================================
 # Работа с файловой системой
 #--------------------------------------------------------------------
-folder_py       = os.path.dirname(__file__)   # Директория .py файла
-
-folder_img          = 'img'         # Главная папка с изображениями
-folder_cat_move     = 'cat_move'    # Подпапка с изображениями кота
-folder_bullets      = 'bullets'     # Подпапка с изображениями снарядов
-
-folder_snd          = 'snd'         # Главная папка со звуками
+folder_py = os.path.dirname(__file__)   # Директория .py файла
 
 #====================================================================
 # Добавление файлов игры
 #--------------------------------------------------------------------
 # Добавление рисунков
 #--------------------------------------------------------------------
-def add_image(add_image_list, folder_img, subfolder_img=None):
+def add_image(add_image_list, folder_img):
     """Добавляет изображения в игру.
     
     add_image_list -> tuple: Имена рисунков с расширениями файлов
         (например: ['pic_1.png', 'pic_2.png']);
-    folder_img -> str: Имя папки с изображениями;
-    subfolder_img -> str: Имя подпапки с изображениями;
+    folder_img -> str: Имя папки с изображениями
+        (например: 'img\\folder');
     
     Возвращает сконвертированные изображения в составе списка.
     
     """
     folder_img = os.path.join(folder_py, str(folder_img))   # Определение папки с изображениями
     added_img_list = []
-    if (subfolder_img != None):
-        subfolder_img = os.path.join(folder_img, str(subfolder_img))    # Определение подпапки с изображениями
-        for img in add_image_list:
-            added_img_list.append(pg.image.load(os.path.join(subfolder_img, img)).convert_alpha())
-    else:
-        for img in add_image_list:    
-            added_img_list.append(pg.image.load(os.path.join(folder_img, img)).convert_alpha())
+    for img in add_image_list:    
+        added_img_list.append(pg.image.load(os.path.join(folder_img, img)).convert_alpha())
     return added_img_list
 
-img_cat_player = add_image(['cat_looks_right.png'], folder_img, folder_cat_move)
+def scale_image(scaling_img, zoom_sise):
+    """Масштабирует изображения.
+    
+    scaling_img: Источник изображения;
+    zoom_sise: Величина масштабирования
+        (например: 0.5 уменьшит размер изображения в два раза);
+    
+    """
+    transform_img = pg.transform.scale(scaling_img,
+                                       (scaling_img.get_width()*zoom_sise,
+                                        scaling_img.get_height()*zoom_sise))
+    return transform_img
+    
+img_cat_player = add_image(['cat_looks_right.png'], 'img\\cat_move')
 img_cat_player = img_cat_player[0]
+img_cat_player = scale_image(img_cat_player, 2)
 
 img_bullets = add_image(['bullet_1.png', 'bullet_2.png',
                         'bullet_3.png', 'bullet_4.png', 'bullet_5.png'],
-                        folder_img, folder_bullets)
+                        'img\\bullets')
 
-img_evil_hand = add_image(['evil_hand.png'], folder_img)
+img_evil_hand = add_image(['evil_hand.png'], 'img')
 img_evil_hand = img_evil_hand[0]
 
-img_background = add_image(['darkPurple.png'], folder_img)
+img_background = add_image(['darkPurple.png'], 'img')
 img_background = img_background[0]
+
+img_blood_anim = {}
+img_blood_anim['small'] = []
+img_blood_anim['medium'] = []
+img_blood_anim['large'] = []
+
+
 
 #--------------------------------------------------------------------
 # Добавление звуков
 #--------------------------------------------------------------------
-def add_sound(add_sound_list, folder_snd, subfolder_snd=None):
+def add_sound(add_sound_list, folder_snd):
     """Добавляет звуки в игру.
     
     add_sound_list -> tuple: Имена звуков с расширениями файлов
         (например: ['sound_1.mp3', 'sound_2.wav']);
     folder_snd -> str: Имя папки со звуками;
-    subfolder_snd -> str: Имя подпапки со звуками;
-    
+        (например: 'snd\\folder');
+        
     Возвращает добавленные звуки в составе списка.
     
     """
     folder_snd = os.path.join(folder_py, str(folder_snd))   # Определение папки со звуками
     added_sound_list = []
-    if (subfolder_snd != None):
-        subfolder_snd = os.path.join(folder_snd,
-                                     str(subfolder_snd))    # Определение подпапки со звуками
-        for snd in add_sound_list:
-            added_sound_list.append(pg.mixer.Sound(os.path.join(subfolder_snd, snd)))
-    else:
-        for snd in add_sound_list:    
-            added_sound_list.append(pg.mixer.Sound(os.path.join(folder_snd, snd)))
+    for snd in add_sound_list:    
+        added_sound_list.append(pg.mixer.Sound(os.path.join(folder_snd, snd)))
     return added_sound_list
 
-def add_music(add_music_list, folder_snd, subfolder_snd=None):
+def add_music(add_music_list, folder_snd):
     """Добавляет музыку в игру.
     
     add_music_list -> tuple: Имена музыки с расширениями файлов
         (например: ['music_1.mp3', 'music_2.wav']);
     folder_snd -> str: Имя папки c музыкой;
-    subfolder_snd -> str: Имя подпапки с музыкой;
-    
+        (например: 'snd\\folder');
+        
     Возвращает добавленную музыку в составе списка.
     
     """
     folder_snd = os.path.join(folder_py, str(folder_snd))   # Определение папки с музыкой
     added_music_list = []
-    if (subfolder_snd != None):
-        subfolder_snd = os.path.join(folder_snd,
-                                     str(subfolder_snd))    # Определение подпапки с музыкой
-        for mus in add_music_list:
-            added_music_list.append(pg.mixer.music.load(os.path.join(subfolder_snd, mus)))
-    else:
-        for mus in add_music_list:    
-            added_music_list.append(pg.mixer.music.load(os.path.join(folder_snd, mus)))
+    for mus in add_music_list:    
+        added_music_list.append(pg.mixer.music.load(os.path.join(folder_snd, mus)))
     return added_music_list
 
-soundtrack_1 = add_music(['soundtrack_1.mp3'], folder_snd)
+soundtrack_1 = add_music(['soundtrack_1.mp3'], 'snd')
 soundtrack_1 = soundtrack_1[0]
 
-snd_shoot = add_sound(['shoot_1.wav', 'shoot_2.wav', 'shoot_3.wav'], folder_snd)
+snd_shoot = add_sound(['shoot_1.wav', 'shoot_2.wav', 'shoot_3.wav'], 'snd')
 
 snd_explosion = add_sound(['explosion_1.wav',
-                           'explosion_2.wav', 'explosion_3.wav'], folder_snd)
+                           'explosion_2.wav', 'explosion_3.wav'], 'snd')
 #====================================================================
 # Задание цветов
 #--------------------------------------------------------------------
@@ -219,9 +217,7 @@ class Cat(pg.sprite.Sprite):
 
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.transform.scale(img_cat_player,
-                                        (img_cat_player.get_width()*2,
-                                         img_cat_player.get_height()*2))       
+        self.image = img_cat_player
         self.rect = self.image.get_rect()
         self.rect.centerx = WIDTH // 2
         self.rect.centery = HEIGHT // 2
