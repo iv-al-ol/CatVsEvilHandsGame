@@ -103,8 +103,6 @@ img_cat_player['move_right'] = add_and_scale_image('cat_', 'img\\cat\\move_right
 img_cat_player['move_up'] = add_and_scale_image('cat_', 'img\\cat\\move_up', 4, 200)
 img_cat_player['move_down'] = add_and_scale_image('cat_', 'img\\cat\\move_down', 4, 200)
 
-img_cat_player = img_cat_player['move_right'][1]
-
 img_bullets = add_image('bullet_', 'img\\bullets', 5)
 
 img_evil_hand = add_image(['evil_hand.png'], 'img')
@@ -113,27 +111,22 @@ img_evil_hand = img_evil_hand[0]
 img_background = add_image(['darkPurple.png'], 'img')
 img_background = img_background[0]
 
-
 img_blood_anim_1 = {}
 img_blood_anim_1['small'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 21, 100)
 img_blood_anim_1['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 21, 200)
 img_blood_anim_1['large'] = add_and_scale_image('1_', 'img\\blood\\anim_1', 21, 300)
-
 img_blood_anim_2 = {}
 img_blood_anim_2['small'] = add_and_scale_image('1_', 'img\\blood\\anim_2', 21, 100)
 img_blood_anim_2['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_2', 21, 200)
 img_blood_anim_2['large'] = add_and_scale_image('1_', 'img\\blood\\anim_2', 21, 300)
-
 img_blood_anim_3 = {}
 img_blood_anim_3['small'] = add_and_scale_image('1_', 'img\\blood\\anim_3', 21, 100)
 img_blood_anim_3['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_3', 21, 200)
 img_blood_anim_3['large'] = add_and_scale_image('1_', 'img\\blood\\anim_3', 21, 300)
-
 img_blood_anim_4 = {}
 img_blood_anim_4['small'] = add_and_scale_image('1_', 'img\\blood\\anim_4', 21, 100)
 img_blood_anim_4['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_4', 21, 200)
 img_blood_anim_4['large'] = add_and_scale_image('1_', 'img\\blood\\anim_4', 21, 300)
-
 img_blood_anim_5 = {}
 img_blood_anim_5['small'] = add_and_scale_image('1_', 'img\\blood\\anim_5', 21, 100)
 img_blood_anim_5['medium'] = add_and_scale_image('1_', 'img\\blood\\anim_5', 21, 200)
@@ -275,8 +268,9 @@ class Cat(pg.sprite.Sprite):
     """Объект игрока. Выводит спрайт кота."""
 
     def __init__(self):
-        pg.sprite.Sprite.__init__(self)
-        self.image = img_cat_player
+        pg.sprite.Sprite.__init__(self)  
+        self.direction = 'move_down'
+        self.image = img_cat_player[self.direction][1]
         self.rect = self.image.get_rect()
         self.rect.centerx = WIDTH // 2
         self.rect.centery = HEIGHT // 2
@@ -284,87 +278,146 @@ class Cat(pg.sprite.Sprite):
         self.speed_x = 0
         self.speed_y = 0
         
+        self.move_speed_x = 6
+        self.move_speed_y = 6
+        
         self.health = 100
         
-        self.shoot_delay = 250
+        self.shoot_delay = 200
         self.last_shot = pg.time.get_ticks()
         self.shoot_speed_x = 0
         self.shoot_speed_y = 0
-        
+
         self.frame = 0
         self.last_update = pg.time.get_ticks()
-        self.frame_rate = 100
+        self.frame_rate = 60
 
     def shoot(self):
         """Выводит спрайт снаряда."""
         now = pg.time.get_ticks()
         if now - self.last_shot > self.shoot_delay:
             self.last_shot = now    
+            
             bullet = Bullet(self.rect.right + 10, self.rect.centery - 10, self.shoot_speed_x, self.shoot_speed_y)
             all_sprites.add(bullet)
             bullets.add(bullet)
             rnd.choice(snd_shoot).play()
-
+    
     def update(self):
         self.speed_x = 0
         self.speed_y = 0
         keystate = pg.key.get_pressed()
-        
-        def move(self):
-            """Описывает движения объекта "Кот"."""
-            # Движение по координате "х"
-            if keystate[pg.K_a]:
-                self.speed_x = -8
-            if keystate[pg.K_d]:
-                self.speed_x = 8
-            self.rect.x += self.speed_x
-            
-            # Движение по координате "y"
-            if keystate[pg.K_w]:
-                self.speed_y = -8
-            if keystate[pg.K_s]:
-                self.speed_y = 8          
-            self.rect.y += self.speed_y
-            
-            # Ограничение по "х"
-            if self.rect.right > WIDTH:
-                self.rect.right = WIDTH
-            if self.rect.left < 0:
-                self.rect.left = 0
-                    
-            # Ограничение по "y"
-            if self.rect.bottom > HEIGHT - HEIGHT // 15:
-                self.rect.bottom = HEIGHT - HEIGHT // 15
-            if self.rect.top < HEIGHT // 20:
-                self.rect.top = HEIGHT // 20
-        move(self)
-        
+         
         def shoot_speed_calc(self):
-            """Определяет скорость полета снарядов."""
+            """Определяет направление полета снарядов."""
             if (keystate[pg.K_LEFT]):
                 self.shoot_speed_x = -10
                 self.shoot_speed_y = 0
-                return self.shoot_speed_x, self.shoot_speed_y
+                self.direction = 'move_left'
             elif keystate[pg.K_RIGHT]:
                 self.shoot_speed_x = 10
                 self.shoot_speed_y = 0
-                return self.shoot_speed_x, self.shoot_speed_y
+                self.direction = 'move_right'
             elif keystate[pg.K_UP]:
                 self.shoot_speed_x = 0
                 self.shoot_speed_y = -10
-                return self.shoot_speed_x, self.shoot_speed_y
+                self.direction = 'move_up'
             elif keystate[pg.K_DOWN]:
                 self.shoot_speed_x = 0
                 self.shoot_speed_y = 10
-                return self.shoot_speed_x, self.shoot_speed_y
+                self.direction = 'move_down'
+            return self.shoot_speed_x, self.shoot_speed_y, self.direction
         shoot_speed_calc(self)
-                
+        
         def shoot_direction():
             """Вызывает функцию выстрела при нажатии клавиш стрельбы."""
             if (keystate[pg.K_LEFT] or keystate[pg.K_RIGHT] or 
                 keystate[pg.K_UP] or keystate[pg.K_DOWN]):
                     self.shoot()
-        shoot_direction()
+        shoot_direction() 
+                
+        def move(self):
+            """Описывает движения объекта."""
+            now = pg.time.get_ticks()
+            
+            def frame_updater():
+                """Отрисовывает кадры изображения."""
+                if (keystate[pg.K_LEFT] or keystate[pg.K_RIGHT] or 
+                    keystate[pg.K_UP] or keystate[pg.K_DOWN]):
+                        shoot_speed_calc(self)
+
+                if now - self.last_update > self.frame_rate:
+                    self.last_update = now
+                    if self.frame == len(img_cat_player[self.direction]):
+                        self.frame = 0
+                    else:
+                        center = self.rect.center
+                        self.image = img_cat_player[self.direction][self.frame]
+                        self.rect = self.image.get_rect()
+                        self.rect.center = center
+                        self.frame += 1
+
+            # Движение по x
+            if keystate[pg.K_a]:
+                if keystate[pg.K_RIGHT]:
+                    self.speed_x = -self.move_speed_x / 1.4
+                    frame_updater()
+                else:    
+                    self.speed_x = -self.move_speed_x
+                    self.direction = 'move_left'
+                    frame_updater()
+                    
+            if keystate[pg.K_d]:
+                if keystate[pg.K_LEFT]:
+                    self.speed_x = self.move_speed_x / 1.4
+                    frame_updater()
+                else:    
+                    self.speed_x = self.move_speed_x
+                    self.direction = 'move_right'
+                    frame_updater()
+            self.rect.x += self.speed_x
+            
+            # Движение по y
+            if keystate[pg.K_w]:
+                if keystate[pg.K_DOWN]:
+                    self.speed_y = -self.move_speed_y / 1.4
+                    frame_updater()
+                else:    
+                    self.speed_y = -self.move_speed_y
+                    self.direction = 'move_up'
+                    frame_updater()
+                    
+            if keystate[pg.K_s]:
+                if keystate[pg.K_UP]:
+                    self.speed_y = self.move_speed_y / 1.4
+                    frame_updater()
+                else:    
+                    self.speed_y = self.move_speed_y
+                    self.direction = 'move_down'
+                    frame_updater()
+            self.rect.y += self.speed_y
+
+            # Отображает изображение стойки при отсутствии нажатий
+            if ((keystate[pg.K_a] or keystate[pg.K_d] or 
+                keystate[pg.K_w] or keystate[pg.K_s]) != True):
+                    center = self.rect.center
+                    self.image = img_cat_player[self.direction][1]
+                    self.rect = self.image.get_rect()
+                    self.rect.center = center
+            
+            def limit_coord(self):
+                """Определяет ограничения по осям координат."""
+                if self.rect.right > WIDTH:
+                    self.rect.right = WIDTH
+                if self.rect.left < 0:
+                    self.rect.left = 0
+                    
+                if self.rect.bottom > HEIGHT - HEIGHT // 15:
+                    self.rect.bottom = HEIGHT - HEIGHT // 15
+                if self.rect.top < HEIGHT // 20:
+                    self.rect.top = HEIGHT // 20
+            limit_coord(self)
+        move(self)
         
 #====================================================================
 # Объект противника
@@ -453,21 +506,24 @@ class BloodExplosion(pg.sprite.Sprite):
         
         self.frame = 0
         self.last_update = pg.time.get_ticks()
-        self.frame_rate = 30
+        self.frame_rate = 20
         
     def update(self):
         now = pg.time.get_ticks()
         
-        if now - self.last_update > self.frame_rate:
-            self.last_update = now
-            self.frame += 1
-            if self.frame == len(img_blood_anim_1[self.size]):    # Если прошел все кадры, то удалить объект
-                self.kill()
-            else:
-                center = self.rect.center
-                self.image = img_blood_anim_1[self.size][self.frame]
-                self.rect = self.image.get_rect()
-                self.rect.center = center    
+        def frame_updater():
+            """Отрисовывает кадры изображения."""
+            if now - self.last_update > self.frame_rate:
+                self.last_update = now
+                if self.frame == len(img_blood_anim_1[self.size]):
+                    self.kill()
+                else:
+                    center = self.rect.center
+                    self.image = img_blood_anim_1[self.size][self.frame]
+                    self.rect = self.image.get_rect()
+                    self.rect.center = center
+                    self.frame += 1
+        frame_updater()
         
 #====================================================================
 # Объект выстрелов
@@ -530,8 +586,8 @@ bullets     = pg.sprite.Group()
 player_cat = Cat()
 all_sprites.add(player_cat) # Добавляем спрайт в группу all_sprites
 
-for i in range(rnd.randrange(10, 35)):
-    add_hands()   # Добавить врагов
+#for i in range(rnd.randrange(10, 35)):
+#    add_hands()   # Добавить врагов
 #--------------------------------------------------------------------
 
 #====================================================================
