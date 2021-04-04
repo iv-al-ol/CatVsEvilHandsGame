@@ -295,10 +295,17 @@ class Cat(pg.sprite.Sprite):
     def shoot(self):
         """Выводит спрайт снаряда."""
         now = pg.time.get_ticks()
-        if now - self.last_shot > self.shoot_delay:
-            self.last_shot = now    
-            
+        if self.direction == 'move_left':
+            bullet = Bullet(self.rect.left - 10, self.rect.centery - 10, self.shoot_speed_x, self.shoot_speed_y)
+        if self.direction == 'move_right':
             bullet = Bullet(self.rect.right + 10, self.rect.centery - 10, self.shoot_speed_x, self.shoot_speed_y)
+        if self.direction == 'move_up':
+            bullet = Bullet(self.rect.centerx, self.rect.top - 10, self.shoot_speed_x, self.shoot_speed_y)
+        if self.direction == 'move_down':
+            bullet = Bullet(self.rect.centerx, self.rect.bottom + 10, self.shoot_speed_x, self.shoot_speed_y)
+                        
+        if now - self.last_shot > self.shoot_delay:
+            self.last_shot = now
             all_sprites.add(bullet)
             bullets.add(bullet)
             rnd.choice(snd_shoot).play()
@@ -490,7 +497,6 @@ class EvilHand(pg.sprite.Sprite):
         if self.rect.bottom < 0 - 3*self.rect.height:
             EvilHand.evil_hand_pos(self)
 
-
 #====================================================================
 # Объект кровавых взрывов
 #--------------------------------------------------------------------
@@ -565,7 +571,6 @@ class Bullet(pg.sprite.Sprite):
         if self.rect.left > WIDTH:
             self.kill()
 
-
 #====================================================================
 # Создаем окно игры
 #--------------------------------------------------------------------
@@ -586,8 +591,8 @@ bullets     = pg.sprite.Group()
 player_cat = Cat()
 all_sprites.add(player_cat) # Добавляем спрайт в группу all_sprites
 
-#for i in range(rnd.randrange(10, 35)):
-#    add_hands()   # Добавить врагов
+for i in range(rnd.randrange(10, 35)):
+    add_hands()   # Добавить врагов
 #--------------------------------------------------------------------
 
 #====================================================================
