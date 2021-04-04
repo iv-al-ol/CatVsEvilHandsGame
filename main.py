@@ -98,9 +98,13 @@ def add_and_scale_image(img_name, folder_img, quantity_img, zoom_sise):
 #====================================================================
 # Добавление изображений
 #--------------------------------------------------------------------
-img_cat_player = add_image(['cat_looks_right.png'], 'img\\cat_move')
-img_cat_player = img_cat_player[0]
-img_cat_player = scale_image(img_cat_player, 200)
+img_cat_player = {}
+img_cat_player['move_left'] = add_and_scale_image('cat_', 'img\\cat\\move_left', 4, 200)
+img_cat_player['move_right'] = add_and_scale_image('cat_', 'img\\cat\\move_right', 4, 200)
+img_cat_player['move_up'] = add_and_scale_image('cat_', 'img\\cat\\move_up', 4, 200)
+img_cat_player['move_down'] = add_and_scale_image('cat_', 'img\\cat\\move_down', 4, 200)
+
+img_cat_player = img_cat_player['move_right'][1]
 
 img_bullets = add_image('bullet_', 'img\\bullets', 5)
 
@@ -266,6 +270,10 @@ class Cat(pg.sprite.Sprite):
         self.last_shot = pg.time.get_ticks()
         self.shoot_speed_x = 0
         self.shoot_speed_y = 0
+        
+        self.frame = 0
+        self.last_update = pg.time.get_ticks()
+        self.frame_rate = 100
 
     def shoot(self):
         """Выводит спрайт снаряда."""
@@ -422,9 +430,10 @@ class BloodExplosion(pg.sprite.Sprite):
         self.image = img_blood_anim_1[self.size][0]
         self.rect = self.image.get_rect()
         self.rect.center = center
+        
         self.frame = 0
         self.last_update = pg.time.get_ticks()
-        self.frame_rate = 50
+        self.frame_rate = 30
         
     def update(self):
         now = pg.time.get_ticks()
