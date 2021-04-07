@@ -501,31 +501,74 @@ class EvilHand(pg.sprite.Sprite):
 # Объект кровавых взрывов
 #--------------------------------------------------------------------
 class BloodExplosion(pg.sprite.Sprite):
-    """Объект кровавых взрывов. Выводит на экран кровавый взрыв."""
+    """Объект кровавых взрывов. Выводит на экран кровавый взрыв.
     
-    def __init__(self, center, size):
+    center: Центральная точка появления взрыва;
+    size: Размер взрыва;
+    anim_type: Тип загруженной анимации взрыва крови (от 1 до 5);
+    
+    """
+    
+    def __init__(self, center, size, frame_rate, anim_type):
         pg.sprite.Sprite.__init__(self)
         self.size = size
+        self.anim_type = anim_type
         self.image = img_blood_anim_1[self.size][0]
         self.rect = self.image.get_rect()
         self.rect.center = center
-        
         self.frame = 0
         self.last_update = pg.time.get_ticks()
-        self.frame_rate = 20
+        self.frame_rate = frame_rate
         
     def update(self):
+        def anim_choice(len_calc, frame):
+            """Добавляет выбор анимации взрыва крови.
+            
+            len_calc: Выбирается при необходимости расчета числа кадров
+                (True - считать кадры, False - не считать кадры);
+            frame: Выбор кадра анимации;
+            
+            """
+            if len_calc == False:    
+                if self.anim_type == 1:
+                    self.image = img_blood_anim_1[self.size][frame]
+                elif self.anim_type == 2:
+                    self.image = img_blood_anim_2[self.size][frame]
+                elif self.anim_type == 3:
+                    self.image = img_blood_anim_3[self.size][frame]
+                elif self.anim_type == 4:
+                    self.image = img_blood_anim_4[self.size][frame]
+                elif self.anim_type == 5:
+                    self.image = img_blood_anim_5[self.size][frame]
+                else:
+                    self.image = img_blood_anim_1[self.size][frame]
+                return self.image
+            elif len_calc == True:
+                if self.anim_type == 1:
+                    image = img_blood_anim_1[self.size]
+                elif self.anim_type == 2:
+                    image = img_blood_anim_2[self.size]
+                elif self.anim_type == 3:
+                    image = img_blood_anim_3[self.size]
+                elif self.anim_type == 4:
+                    image = img_blood_anim_4[self.size]
+                elif self.anim_type == 5:
+                    image = img_blood_anim_5[self.size]
+                else:
+                    image = img_blood_anim_1[self.size]
+                return image
+        
         now = pg.time.get_ticks()
         
         def frame_updater():
             """Отрисовывает кадры изображения."""
             if now - self.last_update > self.frame_rate:
                 self.last_update = now
-                if self.frame == len(img_blood_anim_1[self.size]):
+                if self.frame == len(anim_choice(True, 0)):
                     self.kill()
                 else:
                     center = self.rect.center
-                    self.image = img_blood_anim_1[self.size][self.frame]
+                    self.image = anim_choice(False, self.frame)
                     self.rect = self.image.get_rect()
                     self.rect.center = center
                     self.frame += 1
@@ -627,25 +670,31 @@ while running:
     for hit in hits_bullets_hands:
         score += 1
         rnd.choice(snd_explosion).play()
-        blood_explosion = BloodExplosion(hit.rect.center, 'medium')
+        blood_explosion = BloodExplosion(hit.rect.center, 'medium', 20, rnd.randint(1, 5))
         all_sprites.add(blood_explosion)
         for i in range(rnd.randrange(1, 3)):
             add_hands()
     #----------------------------------------------------------------
     # Проверка касания спрайта ИГРОК с РУКИ
     #----------------------------------------------------------------
-    hits_player_hands = pg.sprite.spritecollide(player_cat, hands, True,
-                                   pg.sprite.collide_rect_ratio(0.95))
-    for hit in hits_player_hands:
-        player_cat.health -= abs(hit.rot_speed) + abs(hit.speed_x) + abs(hit.speed_y)
-        blood_explosion = BloodExplosion(hit.rect.center, 'small')
-        all_sprites.add(blood_explosion)
-        for i in range(rnd.randrange(3, 5)):
-            add_hands()
-        if player_cat.health <= 0:
-            player_cat.health = 0
-            running = False
-
+    if player_cat.alive():
+        hits_player_hands = pg.sprite.spritecollide(player_cat, hands, True,
+                                    pg.sprite.collide_rect_ratio(0.95))
+        for hit in hits_player_hands:
+            player_cat.health -= abs(hit.rot_speed) + abs(hit.speed_x) + abs(hit.speed_y)
+            blood_explosion = BloodExplosion(hit.rect.center, 'small', 20, rnd.randint(1, 5))
+            all_sprites.add(blood_explosion)
+            for i in range(rnd.randrange(3, 5)):
+                add_hands()
+            if player_cat.health <= 0:
+                player_cat.health = 0
+                player_death_explpsion = BloodExplosion(player_cat.rect.center, 
+                                                                'large', 100, rnd.randint(1, 5))
+                all_sprites.add(player_death_explpsion)
+                player_cat.kill()
+    if not player_cat.alive() and not player_death_explpsion.alive():
+        running = False
+    
     #----------------------------------------------------------------
     draw_ground()   # Закрасить фон
     
