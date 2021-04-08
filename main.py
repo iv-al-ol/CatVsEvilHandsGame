@@ -103,6 +103,10 @@ img_cat_player['move_right'] = add_and_scale_image('cat_', 'img\\cat\\move_right
 img_cat_player['move_up'] = add_and_scale_image('cat_', 'img\\cat\\move_up', 4, 200)
 img_cat_player['move_down'] = add_and_scale_image('cat_', 'img\\cat\\move_down', 4, 200)
 
+img_cat_player_lives = add_image(['cat_0.png'], 'img\\cat\\move_right')
+img_cat_player_lives = img_cat_player_lives[0]
+img_cat_player_lives = scale_image(img_cat_player_lives, 70)
+
 img_bullets = add_image('bullet_', 'img\\bullets', 5)
 
 img_evil_hand = add_image(['evil_hand.png'], 'img')
@@ -257,6 +261,13 @@ def draw_health_bar(surf, x, y, filling, color):
     fill_rect = pg.Rect(x, y, fill, BAR_HEIGHT)
     pg.draw.rect(surf, color, fill_rect)
     pg.draw.rect(surf, WHITE, outline_rect, 2)
+
+def draw_lives(surf, x, y, lives, image):
+    for i in range(lives):
+        img_rect = image.get_rect()
+        img_rect.x = x + 30 * i
+        img_rect.y = y
+        surf.blit(image, img_rect)
     
 #####################################################################
 # ОБЪЕКТЫ
@@ -280,8 +291,14 @@ class Cat(pg.sprite.Sprite):
         
         self.move_speed_x = 6
         self.move_speed_y = 6
+
+        self.last_center = self.rect.center
         
         self.health = 100
+        self.lives = 3
+        self.hidden = False
+        self.rebirth_time = 3000
+        self.hidden_time = pg.time.get_ticks()
         
         self.shoot_delay = 200
         self.last_shot = pg.time.get_ticks()
@@ -292,6 +309,12 @@ class Cat(pg.sprite.Sprite):
         self.last_update = pg.time.get_ticks()
         self.frame_rate = 60
 
+    def hide(self):
+        self.hidden = True
+        self.hidden_time = pg.time.get_ticks()
+        self.rect.x = WIDTH*2
+        self.rect.y = HEIGHT*2
+    
     def shoot(self):
         """Выводит спрайт снаряда."""
         now = pg.time.get_ticks()
@@ -314,7 +337,12 @@ class Cat(pg.sprite.Sprite):
         self.speed_x = 0
         self.speed_y = 0
         keystate = pg.key.get_pressed()
-         
+        
+        if self.hidden and pg.time.get_ticks() - self.hidden_time > self.rebirth_time:
+            self.hidden = False
+            self.health = 100
+            self.rect.center = self.last_center
+        
         def shoot_speed_calc(self):
             """Определяет направление полета снарядов."""
             if (keystate[pg.K_LEFT]):
@@ -338,10 +366,10 @@ class Cat(pg.sprite.Sprite):
         
         def shoot_direction():
             """Вызывает функцию выстрела при нажатии клавиш стрельбы."""
-            if (keystate[pg.K_LEFT] or keystate[pg.K_RIGHT] or 
-                keystate[pg.K_UP] or keystate[pg.K_DOWN]):
+            if ((keystate[pg.K_LEFT] or keystate[pg.K_RIGHT] or 
+                keystate[pg.K_UP] or keystate[pg.K_DOWN]) and (not self.hidden)):
                     self.shoot()
-        shoot_direction() 
+        shoot_direction()
                 
         def move(self):
             """Описывает движения объекта."""
@@ -404,7 +432,7 @@ class Cat(pg.sprite.Sprite):
                     frame_updater()
             self.rect.y += self.speed_y
 
-            # Отображает изображение стойки при отсутствии нажатий
+            # Отображает изображение стойки при отсутствии нажатий;
             if ((keystate[pg.K_a] or keystate[pg.K_d] or 
                 keystate[pg.K_w] or keystate[pg.K_s]) != True):
                     center = self.rect.center
@@ -423,7 +451,8 @@ class Cat(pg.sprite.Sprite):
                     self.rect.bottom = HEIGHT - HEIGHT // 15
                 if self.rect.top < HEIGHT // 20:
                     self.rect.top = HEIGHT // 20
-            limit_coord(self)
+            if not self.hidden:  # Если не скрыт, то учитывать ограничения координат;
+                limit_coord(self)
         move(self)
         
 #====================================================================
@@ -505,6 +534,7 @@ class BloodExplosion(pg.sprite.Sprite):
     
     center: Центральная точка появления взрыва;
     size: Размер взрыва;
+    frame_rate: Время до следующего кадра;
     anim_type: Тип загруженной анимации взрыва крови (от 1 до 5);
     
     """
@@ -682,17 +712,20 @@ while running:
                                     pg.sprite.collide_rect_ratio(0.95))
         for hit in hits_player_hands:
             player_cat.health -= abs(hit.rot_speed) + abs(hit.speed_x) + abs(hit.speed_y)
-            blood_explosion = BloodExplosion(hit.rect.center, 'small', 20, rnd.randint(1, 5))
+            blood_explosion = BloodExplosion(hit.rect.center, 
+                                             'small', 20, rnd.randint(1, 5))
             all_sprites.add(blood_explosion)
             for i in range(rnd.randrange(3, 5)):
                 add_hands()
             if player_cat.health <= 0:
+                player_cat.last_center = player_cat.rect.center
+                player_cat.hide()
                 player_cat.health = 0
-                player_death_explpsion = BloodExplosion(player_cat.rect.center, 
+                player_cat.lives -= 1
+                player_death_explpsion = BloodExplosion(player_cat.last_center, 
                                                                 'large', 100, rnd.randint(1, 5))
                 all_sprites.add(player_death_explpsion)
-                player_cat.kill()
-    if not player_cat.alive() and not player_death_explpsion.alive():
+    if player_cat.lives <= 0:
         running = False
     
     #----------------------------------------------------------------
@@ -700,12 +733,13 @@ while running:
     
     all_sprites.draw(screen)    # Отрисовка всех спрайтов
     
+    draw_text(screen, str('Уничтожено рук: %s' % score), 30, WIDTH // 2, HEIGHT // 90)
     draw_health_bar(screen, WIDTH // 2, HEIGHT - HEIGHT // 11, player_cat.health, RED)
     draw_text(screen, str('Здоровье: %s' % player_cat.health), 
               30, WIDTH // 2, HEIGHT - HEIGHT // 16)
-    draw_text(screen, str('Уничтожено рук: %s' % score), 30, WIDTH // 2, HEIGHT // 90)
+    draw_lives(screen, WIDTH // 1.4, HEIGHT - HEIGHT // 19, player_cat.lives, img_cat_player_lives)
     
-#-------------------------------------------------------------------- 
+#--------------------------------------------------------------------
     pg.display.flip()   # После отрисовки всего, переворачиваем экран
 #--------------------------------------------------------------------
 
